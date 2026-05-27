@@ -3,20 +3,17 @@ import pandas as pd
 import plotly.express as px
 from sklearn.ensemble import RandomForestClassifier
 
-# 1. Page Configuration & Global Styling
 st.set_page_config(
     page_title="Titanic Advanced BI Space",
     page_icon="🚢",
     layout="wide"
 )
 
-# Central Color Palette Strategy (Green for Survived, Red for Died)
 COLOR_MAP = {'Survived': '#2ca02c', 'Died': '#d62728'}
 
 st.title("🚢 Titanic Advanced BI & Predictive Machine Learning Suite")
 st.markdown("An immersive data space exploring historical survival pathways, behavioral correlations, and machine learning scenarios.")
 
-# 2. Data Engine & Feature Engineering
 @st.cache_data
 def load_and_engineer_data():
     df = pd.read_csv('titanic_cleaned.csv')
@@ -26,26 +23,25 @@ def load_and_engineer_data():
     df['Ticket Class'] = df['passenger_class'].map({1: '1st Class', 2: '2nd Class', 3: '3rd Class'})
     df['Embarkation Port'] = df['embarkation_port'].map({'S': 'Southampton', 'C': 'Cherbourg', 'Q': 'Queenstown'}).fillna('Unknown')
     
-    # Feature Engineering 1: Family Layouts
+
     df['Family Size'] = df['siblings_spouses_count'] + df['parents_children_count']
     
-    # Feature Engineering 2: Age Slices (Brackets) for clean Categorical Grouping
+    # Age Slices (Brackets) for clean Categorical Grouping
     bins = [0, 12, 18, 35, 60, 100]
     labels = ['Child (0-12)', 'Teenager (13-18)', 'Young Adult (19-35)', 'Adult (36-60)', 'Senior (60+)']
     df['Age Bracket'] = pd.cut(df['age'], bins=bins, labels=labels)
     
-    # Feature Engineering 3: Extract Deck Level from Cabin Code
     df['Deck'] = df['cabin_code'].str[0].str.upper()
     df['Deck'] = df['Deck'].replace({'U': 'Unknown (No Cabin Data)'})
     
-    # Feature Engineering 4: Title Extraction
+    # Title Extraction
     df['Title'] = df['passenger_name'].str.extract(' ([A-Za-z]+)\.', expand=False)
     rare_titles = ['Dr', 'Rev', 'Mlle', 'Major', 'Col', 'Countess', 'Capt', 'Ms', 'Sir', 'Lady', 'Mme', 'Don', 'Jonkheer']
     df['Title'] = df['Title'].replace(rare_titles, 'Rare/Noble')
     
     return df
 
-# 3. Machine Learning Training Matrix
+# Machine Learning Training Matrix
 @st.cache_resource
 def train_predictive_model(data):
     ml_df = data.copy()
@@ -65,10 +61,9 @@ try:
     df = load_and_engineer_data()
     ml_model, ml_features = train_predictive_model(df)
 except FileNotFoundError:
-    st.error("Missing dataset! Place 'titanic_cleaned.csv' inside the folder containing this app script.")
+    st.error("Missing dataset!")
     st.stop()
 
-# 4. Sidebar Controller Panel
 st.sidebar.header("🕹️ Global Dashboard Filters")
 search_query = st.sidebar.text_input("🔍 Search Passenger Name:", "")
 
@@ -117,7 +112,7 @@ else:
 
     # ---- TAB 1: ADVANCED VISUALIZATIONS ----
     with tab1:
-        # High Impact Row: Parallel Categorical Pathways
+        
         st.subheader("Demographic Survival Ribbons Flow")
         st.markdown("*Trace the structural flows of survival lines directly across ticket tiers and gender classifications.*")
         
@@ -214,11 +209,9 @@ else:
             sim_fam = st.slider("Accompanied Family Count:", min_value=0, max_value=10, value=0)
             sim_port = st.selectbox("Port of Boarding:", options=["S", "C", "Q"], format_func=lambda x: "Southampton" if x=="S" else "Cherbourg" if x=="C" else "Queenstown")
             
-            # Map values for model compliance
             gender_binary = 1 if sim_gender == "female" else 0
             port_binary = 0 if sim_port == "S" else 1 if sim_port == "C" else 2
             
-            # Form single-line vector row
             input_vector = pd.DataFrame([[sim_class, gender_binary, sim_age, sim_fare, sim_fam, port_binary]], columns=ml_features)
             
             # Prediction processing
